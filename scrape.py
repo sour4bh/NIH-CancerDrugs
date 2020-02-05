@@ -8,6 +8,7 @@ import bs4
 import json
 import time
 from tqdm import tqdm
+import random
 #%%
 txt = lambda elem: elem.text.replace('\n', '').strip()
 
@@ -79,21 +80,34 @@ def extract_text(soup):
 
 url = lambda link: 'https://www.cancer.gov' + link
 #%%
-while  True:
+drugs = pd.read_csv('drug_list.csv')
+
+def get_rand_drug(done, drugs):
+    drug, link = drugs.iloc[0]
+    choice = 0
+    while drug + '.json' in done:
+        choice = random.choice(range(len(drugs)))
+        drug, link = drugs.iloc[choice]
+    return drug, link, choice
+
+while True:
     try:
-        drugs = pd.read_csv('drug_list.csv')
-        done = len(os.listdir('data/'))
-        for i in tqdm(range(len(drugs))):
-            if i < done - 2:
-                continue
-            drug, link = drugs.iloc[i]
+        done = os.listdir('data/')
+        if len(done) == len(drugs):
+            print('done')
+            break
+        else:
+            print('Done', len(done), 'out of', len(drugs))
+            drug, link, i= get_rand_drug(done, drugs)
+            print('choosing', i, ':', drug)
             r = requests.get(url(link))
             soup = bs4.BeautifulSoup(r.content, 'lxml')
             with open(f'data/{drug}.json', 'w') as f:
                 content = {**exctract_meta(soup), **extract_text(soup.find('div', 'accordion'))}
                 # print(content['text'])
                 json.dump(content, f)
-            time.sleep(5)
+                time.sleep(5)
+            print('done')
     except (RetryError, ConnectionError):
         print('waiting 30 seconds..')
         time.sleep(30)
