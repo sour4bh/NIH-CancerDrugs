@@ -93,7 +93,7 @@ while  True:
                 content = {**exctract_meta(soup), **extract_text(soup.find('div', 'accordion'))}
                 # print(content['text'])
                 json.dump(content, f)
-        time.sleep(5)
+            time.sleep(5)
     except (RetryError, ConnectionError):
         print('waiting 30 seconds..')
         time.sleep(30)
